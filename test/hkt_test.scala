@@ -1,10 +1,24 @@
+import org.scalatest.FunSuite
 
-import org.scalatest._
+class SetSuite extends FunSuite {
 
-abstract class UnitSpec extends FlatSpec with Matchers with
-  OptionValues with Inside with Inspectors
+  trait Sample {
+  }
 
+  test("An empty Set should have size 0") {
+    new Sample {
+      assert(Set.empty.size == 0)
+    }
+  }
 
-class MySpec extends UnitSpec {
-  // Your tests here
+  test("Invoking head on an empty Set should produce NoSuchElementException") {
+    intercept[NoSuchElementException] {
+      Set.empty.head
+    }
+  }
+
+  test("A real test for plying with hkt") {
+
+  }
+
 }
