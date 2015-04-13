@@ -69,4 +69,42 @@ class MySuite extends FunSuite {
     assert(res1 == res2)
   }
 
+  test("Applicative fmap and <*> test") {
+    val af = Applicative[List]
+    
+    val list = List(1, 2, 3)
+    val inc = (x: Int) => x + 1
+    
+    val res1 = af.fmap(list)(inc)
+    val res2 = af.<*>(list)(af.pure(inc))
+    
+    assert(res1 == res2)
+  }
+
+  test("Applicative <*> swap order test") {
+    val af = Applicative[List]
+    
+    val data = 1
+    val partialAf = af.pure((x: Int) => x + 1)
+    
+    val res1 = af.<*>(af.pure(data))(partialAf)
+    val res2 = af.<*>(partialAf)(af.pure((func: Int => Int) => func(data)))
+    
+    assert(res1 == res2)
+  }
+
+  test("Applicative lifting functions test") {
+    val af = Applicative[List]
+    
+    val lab: List[Int => String] = List((x: Int) => x.toString)
+    val lbc: List[String => Int] = List((x: String) => x.length)
+    val list = List(1, 2, 3)
+    
+    val comp = (bc: String => Int) => (ab: Int => String) => bc compose ab
+    
+    val res1 = af.<*>( af.<*>(list)(lab) )(lbc)
+    val res2 = af.<*>(list)( af.<*>(lab)( af.<*>(lbc)( af.pure(comp) ) ) )
+    
+    assert(res1 == res2)
+  }
 }
