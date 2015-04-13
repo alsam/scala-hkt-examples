@@ -12,13 +12,14 @@ object Functor {
 
 trait Applicative[F[_]] extends Functor[F] {
 
-  def apply[A, B](f: F[A => B]): F[A] => F[B] // its synonim ia a <*>
+  def apply[A, B](fa: => F[A])(f: => F[A => B]): F[B] // its synonim ia a <*>
 
-  def <*>[A, B](f: F[A => B]): F[A] => F[B] = apply(f)
+  def <*>[A,B](fa: => F[A])(f: => F[A => B]): F[B] = apply(fa)(f)
 
   def point[A](a: => A): F[A]
 
   def pure[A](a: => A): F[A] = point(a)
+
 }
 
 object Applicative {

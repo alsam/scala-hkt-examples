@@ -7,23 +7,17 @@ class MySuite extends FunSuite {
   implicit val listFunctor: Functor[List] = new Functor[List] {
     def fmap[A, B](fa: List[A])(f: A => B): List[B] = fa.map(f)
   }
-   
+  
+  implicit val listApplicative: Applicative[List] =
+    new Applicative[List] {
+      def point[A](a: => A): List[A] = List(a)
 
-  trait Sample {
-    val id = 0
-  }
+      def apply[A,B](fa: => List[A])(f: => List[A => B]): List[B] = for {
+        elem <- fa
+        func <- f
+      } yield func(elem)
 
-  test("An empty Set should have size 0") {
-    val sample = new Sample {
-      assert(Set.empty.size == 0)
-    }
-    assert(sample.id == 0)
-  }
-
-  test("Invoking head on an empty Set should produce NoSuchElementException") {
-    intercept[NoSuchElementException] {
-      Set.empty.head
-    }
+      def fmap[A, B](fa: List[A])(f: A => B): List[B] = apply(fa)(point(f))
   }
 
   test("Functor inc test") {
@@ -46,6 +40,33 @@ class MySuite extends FunSuite {
     val mapRes = Functor[List].fmap(Functor[List].fmap(inputList)(f1))(f2)
     
     assert(compRes == mapRes)
+  }
+
+  test("Applicative add test") {
+    val add = (x: Int, y: Int) => x + y
+
+    val list1 = List(1, 2, 3)
+    val list2 = List(4, 5, 6)
+
+    val result = Applicative[List].<*>(list2)(Functor[List].fmap(list1)(add.curried))
+    assert(result == List(5, 6, 7, 6, 7, 8, 7, 8, 9))
+  }
+
+  test("Applicative identity law test") {
+    val expectedList = List(1, 2, 3)
+    val outputList = Applicative[List].<*>(expectedList)(List((x: Int) => x))
+    assert(expectedList == outputList)
+  }
+
+  test("Applicative pure composition test") {
+    val af = Applicative[List]
+    val data = 1
+    val inc = (x: Int) => x + 1
+
+    val res1 = af.<*>(af.pure(data))(af.pure(inc))
+    val res2 = af.pure(inc(data))
+
+    assert(res1 == res2)
   }
 
 }
