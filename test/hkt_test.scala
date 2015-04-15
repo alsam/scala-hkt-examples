@@ -1,8 +1,7 @@
 import org.scalatest.FunSuite
+import hkt._
 
-class MySuite extends FunSuite {
-
-  import hkt._
+class BasicSuite extends FunSuite {
 
   implicit val listFunctor: Functor[List] = new Functor[List] {
     def fmap[A, B](fa: List[A])(f: A => B): List[B] = fa.map(f)
@@ -107,4 +106,33 @@ class MySuite extends FunSuite {
     
     assert(res1 == res2)
   }
+}
+
+// a more advanced use case & test suite
+class AdvancedSuite extends FunSuite {
+
+  trait Base
+
+  trait MyDsl
+
+  // cake pattern in use
+  trait GPU extends Base { self: MyDsl =>
+
+    /** an entity for keeping data on device */
+    trait Device[A] /* extends Reifiable[Device[T]] */ {
+
+      /** this is pure from applicative functor, i.e. constructor */
+      def to(e: A): Device[A]
+
+      /** kernel launch for device */
+      def map[B](fn: A => B): Device[B]
+    }
+
+    implicit val deviceFunctor: Functor[Device] = new Functor[Device] {
+      def fmap[T, U](m: Device[T])(fn: T => U): Device[U] = m.map(fn)
+    }
+
+
+  }
+
 }
