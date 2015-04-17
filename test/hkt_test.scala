@@ -111,18 +111,78 @@ class BasicSuite extends FunSuite {
 // a more advanced use case & test suite
 class AdvancedSuite extends FunSuite {
 
-  trait Base
+  import scala.reflect.runtime.universe._ // for WeakTypeTag
 
-  trait MyDsl
+  trait Cake extends Base
+    with Elems
+
+  trait Base { self: Cake =>
+    type Rep[A]
+    type Def[A]
+    type IntRep = Rep[Int]
+
+    def toRep[A](x: A)(implicit eA: Elem[A]): Rep[A] = ??? //(s"Don't know how to create Rep for $x with element $eA")
+
+    trait Reifiable[T]
+
+    object Def {
+      def unapply[T](e: Rep[T]): Option[Def[T]] = def_unapply(e)
+    }
+    def def_unapply[T](e: Rep[T]): Option[Def[T]]
+  }
+
+  trait Elems extends Base { self: Cake =>
+    type Elem[A] = Element[A]
+
+    abstract class Element[A] extends Serializable {
+      def isEntityType: Boolean
+      def isBaseType: Boolean = this.isInstanceOf[BaseElem[_]]
+      def tag: WeakTypeTag[A]
+    }
+
+    def element[A](implicit ea: Elem[A]): Elem[A] = ea
+
+    class BaseElem[A](implicit val tag: WeakTypeTag[A]) extends Element[A] with Serializable {
+      override def isEntityType = false
+    }
+
+  }
+
+  trait BaseExp extends Base { self: CakeExp =>
+    type Rep[A] = Exp[A]
+
+    abstract class Exp[T] {
+      def elem: Elem[T]
+      def isConst: Boolean = this match {
+        case Def(Const(_)) => true
+        case _ => false
+      }
+    }
+
+    trait ReifiableExp[T] extends Reifiable[T]
+
+    type Def[A] = ReifiableExp[A]
+
+    abstract class BaseDef[T](implicit val selfType: Elem[T]) extends Def[T]
+  
+    case class Const[T: Elem](x: T) extends BaseDef[T] {
+      def uniqueOpId = toString
+    }
+
+  
+  }
+
+  trait MyDsl extends Cake
+  trait CakeExp extends Cake with Elems
 
   // cake pattern in use
   trait GPU extends Base { self: MyDsl =>
 
     /** an entity for keeping data on device */
-    trait Device[A] /* extends Reifiable[Device[T]] */ {
+    trait Device[A] extends Reifiable[Device[A]] {
 
       /** this is pure from applicative functor, i.e. constructor */
-      def to(e: A): Device[A]
+      def from(e: A): Device[A]
 
       /** kernel launch for device */
       def map[B](fn: A => B): Device[B]
