@@ -1,0 +1,2 @@
+java -cp lib_managed/jars/org.scala-lang/scala-library/scala-library-2.10.4.jar:target/scala-2.10/classes hkt.Test 1st-parm 2nd-parm
+robovm -d robovm-exec/ -cp lib_managed/jars/org.scala-lang/scala-library/scala-library-2.10.4.jar:target/scala-2.10/classes hkt.Test
